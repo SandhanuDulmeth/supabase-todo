@@ -40,40 +40,94 @@ export default function Home() {
     await loadTasks();
   }
 
+  async function toggleTask(id: number, completed: boolean) {
+    setLoading(true);
+    const { error } = await supabase
+      .from('todos')
+      .update({ completed: !completed })
+      .eq('id', id);
+    if (error) {
+      console.error(error);
+    }
+    await loadTasks();
+  }
+
+  async function deleteTask(id: number) {
+    setLoading(true);
+    const { error } = await supabase
+      .from('todos')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      console.error(error);
+    }
+    await loadTasks();
+  }
   useEffect(() => {
     loadTasks();
   }, []);
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h1 className="text-2xl font-bold mb-4">Todo List</h1>
-      <form onSubmit={addTask} className="flex gap-2 mb-4">
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Enter task"
-          disabled={loading}
-          className="border px-2 py-1 rounded flex-1"
-        />
-        <button
-          type="submit"
-          disabled={loading || !input.trim()}
-          className="bg-blue-500 text-white px-4 py-1 rounded disabled:opacity-50"
-        >
-          Add
-        </button>
-      </form>
-      {loading && <div className="mb-2 text-gray-500">Loading...</div>}
-      <ul>
-        {tasks.length === 0 && !loading && (
-          <li className="text-gray-400">No tasks yet.</li>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Todo List</h1>
+        <form onSubmit={addTask} className="flex gap-2 mb-6">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Add a new task..."
+            disabled={loading}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <button
+            type="submit"
+            disabled={loading || !input.trim()}
+            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Add
+          </button>
+        </form>
+        
+        {loading && (
+          <div className="flex items-center justify-center mb-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            <span className="ml-2 text-gray-500">Loading...</span>
+          </div>
         )}
-        {tasks.map(item => (
-          <li key={item.id} className="py-1">
-            {item.task} {item.completed ? '✅' : ''}
-          </li>
-        ))}
-      </ul>
+        
+        <div className="space-y-2">
+          {tasks.length === 0 && !loading && (
+            <div className="text-center py-8 text-gray-400">
+              <p>No tasks yet. Add one above!</p>
+            </div>
+          )}
+          {tasks.map(item => (
+            <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <button
+                onClick={() => toggleTask(item.id, item.completed)}
+                disabled={loading}
+                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                  item.completed 
+                    ? 'bg-green-500 border-green-500 text-white' 
+                    : 'border-gray-300 hover:border-green-400'
+                }`}
+              >
+                {item.completed && '✓'}
+              </button>
+              <span className={`flex-1 ${item.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                {item.task}
+              </span>
+              <button
+                onClick={() => deleteTask(item.id)}
+                disabled={loading}
+                className="text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
